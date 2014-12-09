@@ -1,4 +1,4 @@
-var App = Ember.Application.create();
+window.App = Ember.Application.create();
 App.ApplicationAdapter = DS.RESTAdapter.extend({
 
 });
@@ -9,51 +9,118 @@ App.ApplicationSerializer = DS.RESTSerializer.extend({
 
 App.Router.map(function() {
 
-    this.route("room",{path:"/room/:roomId"})
+    this.route("upload",{path:"/"})
 
 
 
   });
 
-  App.Room=DS.Model.extend({
-    roomId:DS.attr()
-  })
-  App.RoomController=Ember.Controller.extend({
-
+  App.Upload=DS.Model.extend({
+    file:DS.attr(),
+    transactions:DS.hasMany("transaction",{async:true})
   })
 
-  App.RoomRoute=Ember.Route.extend({
-    model:function(params){
-      this.set("roomId",params.roomId)
-      return {}
+  App.Transaction=DS.Model.extend({
+    ticker:DS.attr(),
+    action:DS.attr(),
+    quantity:DS.attr(),
+    price:DS.attr(),
+    date:DS.attr(),
+    upload:DS.belongsTo("upload",{async:true})
+  })
+
+  App.UploadController=Ember.ArrayController.extend(DropletController,{
+    currentUpload:null,
+    actions:{
+      download:function(id){
+        location.href="/download_csv/"+id
+      },
+      delete:function(id){
+        var controller=this;
+        jQuery.ajax({
+          url:"/delete_csv/"+id,
+          method:"POST",
+          success:function(){
+            alert("success")
+            controller.store.unloadRecord(controller.store.getById("upload",id))
+          },
+          error:function(){
+            alert("error")
+          }
+        })
+      },
+      getTransactions:function(id){
+        var controller=this;
+        var currentUpload=controller.store.getById("upload",id)
+        controller.set("currentUpload",currentUpload)
+        jQuery.ajax({
+          url:"/get_transactions/"+id,
+          method:"GET",
+          success:function(data){
+            alert("success")
+            console.log(data.transactions)
+            controller.store.pushMany("transaction",data.transactions)
+            console.log(controller.store.all("transaction"))
+            console.log(currentUpload)
+          },
+          error:function(){
+            alert("error")
+          }
+        })
+      }
     },
-    setupController:function(controller,model){
-      this._super(controller, model);
-      controller.set("roomId",this.get("roomId"))
+
+    dropletUrl: 'upload',
+
+    dropletOptions: {
+      fileSizeHeader: true,
+      useArray: false
+    },
+
+    /**
+    * Specifies the valid MIME types. Can used in an additive fashion by using the
+    * property below.
+    *
+    * @property mimeTypes
+    * @type {Array}
+    */
+    mimeTypes: ['image/bmp','text/csv'],
+
+    /**
+    * Apply this property if you want your MIME types above to be appended to the white-list
+    * as opposed to replacing the white-list entirely.
+    *
+    * @property concatenatedProperties
+    * @type {Array}
+    */
+    concatenatedProperties: ['mimeTypes'],
+
+    /**
+    * @method didUploadFiles
+    * @param response {Object}
+    * @return {void}
+    */
+    didUploadFiles: function(response) {
+      console.log(response);
+      this.store.push("upload",response)
+    }
+
+  })
+
+  App.UploadRoute=Ember.Route.extend({
+    model:function(params){
+      return this.store.find("upload")
     }
   })
 
-  App.RoomView=Ember.View.extend({
+  App.UploadView=Ember.View.extend({
     didInsertElement:function(){
-      console.log(this.get("controller"))
-      console.log(this.get("controller.roomId"))
-      this.set("roomSocket", new WebSocket("ws://10.0.0.2:8080/room/"+this.get("controller.roomId")))
-      var roomSocket=this.get("roomSocket")
-      roomSocket.onmessage = function (event) {
-        console.log("socket")
-        console.log(event)
-        $("#messages").append("<p>"+event.data+"</p>")
-      }
+      console.log("hi")
     },
     willDestroyElement:function(){
       //this.get("roomSocket").close()
-    }
+    },
 
-  })
+    DragDrop: DropletView.extend()
 
-  App.ChatTextFieldView=Ember.TextField.extend({
-    input:function(){
-      this.get("parentView").get("roomSocket").send(this.get("value"))
-
-    }
   })
