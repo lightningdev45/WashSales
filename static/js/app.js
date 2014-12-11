@@ -9,7 +9,10 @@ App.ApplicationSerializer = DS.RESTSerializer.extend({
 
 App.Router.map(function() {
 
-    this.route("upload",{path:"/"})
+    this.resource("uploads",{path:"/"},function(){
+      this.route("newUpload")
+      this.route("transactions",{path:"/transactions/:uploadId"})
+    })
 
 
 
@@ -29,8 +32,24 @@ App.Router.map(function() {
     upload:DS.belongsTo("upload",{async:true})
   })
 
-  App.UploadController=Ember.ArrayController.extend(DropletController,{
-    currentUpload:null,
+  App.UploadsTransactionsController=Ember.ArrayController.extend({
+
+  })
+
+  App.UploadsTransactionsRoute=Ember.Route.extend({
+    model:function(params){
+      console.log(params.uploadId)
+      return this.store.getById("upload",params.uploadId).get("transactions")
+    }
+
+  })
+
+
+  App.UploadsController=Ember.ArrayController.extend({
+    selectedUpload:function(){
+      console.log(this.get("model.firstObject.id"))
+      return this.get("model.firstObject")
+    }.property("model.[]"),
     actions:{
       download:function(id){
         location.href="/download_csv/"+id
@@ -68,15 +87,22 @@ App.Router.map(function() {
           }
         })
       }
-    },
+    }
 
+  })
+
+
+  App.UploadsNewUploadView=Ember.View.extend({
+
+    DragDrop: DropletView.extend()
+  })
+
+  App.UploadsNewUploadController=Ember.ArrayController.extend(DropletController,{
     dropletUrl: 'upload',
-
     dropletOptions: {
       fileSizeHeader: true,
       useArray: false
     },
-
     /**
     * Specifies the valid MIME types. Can used in an additive fashion by using the
     * property below.
@@ -85,7 +111,6 @@ App.Router.map(function() {
     * @type {Array}
     */
     mimeTypes: ['image/bmp','text/csv'],
-
     /**
     * Apply this property if you want your MIME types above to be appended to the white-list
     * as opposed to replacing the white-list entirely.
@@ -94,33 +119,40 @@ App.Router.map(function() {
     * @type {Array}
     */
     concatenatedProperties: ['mimeTypes'],
-
     /**
     * @method didUploadFiles
     * @param response {Object}
     * @return {void}
     */
     didUploadFiles: function(response) {
-      console.log(response);
       this.store.push("upload",response)
     }
-
   })
 
-  App.UploadRoute=Ember.Route.extend({
+  App.UploadsRoute=Ember.Route.extend({
     model:function(params){
       return this.store.find("upload")
+    },
+    afterModel:function(){
+      this.transitionTo("uploads.newUpload")
     }
+  })
+
+  App.UploadController=Ember.ObjectController.extend({
+    needs:["uploads"],
+    isSelected:Ember.computed.equal("id","controllers.uploads.currentUpload.id"),
   })
 
   App.UploadView=Ember.View.extend({
     didInsertElement:function(){
       console.log("hi")
     },
+
+    click:function(){
+      this.get("parentView.controller").set("selectedUpload",this.get("controller"))
+    },
     willDestroyElement:function(){
       //this.get("roomSocket").close()
-    },
-
-    DragDrop: DropletView.extend()
+    }
 
   })

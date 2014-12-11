@@ -5,9 +5,10 @@ import (
 )
 
 var (
-	Session           *mgo.Session
-	UploadsCollection *mgo.Collection
-	err               error
+	Session                *mgo.Session
+	UploadsCollection      *mgo.Collection
+	TransactionsCollection *mgo.Collection
+	err                    error
 )
 
 func Connect() error {
@@ -17,5 +18,6 @@ func Connect() error {
 	}
 	Session.SetMode(mgo.Monotonic, true)
 	UploadsCollection = Session.DB("washSales").C("uploads")
+	TransactionsCollection = Session.DB("washSales").C("transactions")
 	return err
 }
