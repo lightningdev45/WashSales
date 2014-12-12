@@ -8,6 +8,7 @@ var (
 	Session                *mgo.Session
 	UploadsCollection      *mgo.Collection
 	TransactionsCollection *mgo.Collection
+	UsersCollection        *mgo.Collection
 	err                    error
 )
 
@@ -19,5 +20,6 @@ func Connect() error {
 	Session.SetMode(mgo.Monotonic, true)
 	UploadsCollection = Session.DB("washSales").C("uploads")
 	TransactionsCollection = Session.DB("washSales").C("transactions")
+	UsersCollection = Session.DB("washSales").C("users")
 	return err
 }

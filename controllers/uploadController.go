@@ -68,6 +68,7 @@ func (this *UploadController) DeleteCsv() {
 }
 
 func (this *UploadController) DownloadCsv() {
+	log.Println(this.Ctx)
 	csvId := this.Ctx.Input.Param(":csv_id")
 	var bsonCsvId bson.ObjectId
 	if bson.IsObjectIdHex(csvId) {

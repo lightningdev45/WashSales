@@ -11,9 +11,103 @@
 
   	<body>
       <script type="text/x-handlebars" id="application">
-        <div class="container">
+
+            <nav class="navbar navbar-default" role="navigation">
+            <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">TaxForms</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+            <ul class="nav navbar-nav navbar-right">
+            {{#if isAuthenticated}}
+              <li>{{#link-to "uploads.newUpload"}}{{controllers.auth.currentUser.email}} {{/link-to}}</li>
+              <li><a href="#" {{action "logout"}}>Logout</a></li>
+            {{else}}
+              <li>{{#link-to "signIn"}}Sign In {{/link-to}}</li>
+              <li>{{#link-to "signUp"}}Sign Up {{/link-to}}</li>
+            {{/if}}
+            </ul>
+            </div><!-- /.navbar-collapse -->
+            </div><!-- /.container-fluid -->
+            </nav>
+            <div class="container">
           {{outlet}}
         </div>
+      </script>
+
+      <script type="text/x-handlebars" id="signIn">
+        <div class="panel panel-default">
+        <div class="panel-heading"><h4 >Sign in</h4></div>
+        <div class="panel-body">
+        <form {{action "login"  on="submit"}} class="form-horizontal col-xs-12 col-sm-12 col-md-12  col-lg-12">
+
+        <div class="form-group"><label class="control-label col-xs-3 col-sm-3 col-md-3  col-lg-3">Email</label>
+        <div class="col-xs-7 col-sm-7 col-md-7  col-lg-7">
+        {{input type="text" value=email type="text" id="email" class="form-control" required="true"}}
+        </div>
+        <div class="col-xs-1 col-sm-1 col-md-1  col-lg-1"></div></div>
+
+        <div class="form-group"><label class="control-label col-xs-3 col-sm-3 col-md-3  col-lg-3">Password</label>
+        <div class="col-xs-7 col-sm-7 col-md-7  col-lg-7">
+        {{input type="text" value=password id="password" type="password" class="form-control" required="true" pattern=".{8,}" title="Passwords must be at least 8 characters."}}</div>
+
+        <div class="col-xs-1 col-sm-1 col-md-1  col-lg-1"></div>
+        </div>
+
+
+        <div class="text-center col-xs-12 col-sm-12 col-md-12  col-lg-12">
+        <button  type="submit" class="btn btn-success" value="Login">Login</button>
+        </div>
+        </form>
+        </div>
+        </div>
+
+      </script>
+
+      <script type="text/x-handlebars" id="signUp">
+
+      <div class="panel panel-default">
+
+      <div class=" panel-heading"><h4>Register an Account</h4></div>
+      <div class="panel-body">
+
+      <form {{action "register"  on="submit"}} id="register-form" class=" form-horizontal col-xs-12">
+
+      <h4 class="text-center">Account Info</h4>
+      <div class="form-group">
+
+      <div class="form-group"><label class="control-label col-xs-3">Email*</label>
+      <div class="col-xs-9">
+      {{input value=email type="text" id="email" class="form-control" required="true" pattern=".+"}}
+      </div>
+      </div>
+
+                      <div class="form-group"><label class="control-label col-xs-3">Password*</label>
+                        <div class="col-xs-9">
+                          {{input value=password type="password" id="password" class="form-control" required="true" pattern=".{8,}" title="Passwords must be at least 8 characters."}}
+                        </div>
+                      </div>
+
+                      <div class="text-center col-xs-12"><button  type="submit" class="btn btn-success" value="Login">Register</button></div>
+
+                      <div class="float-clear"></div>
+
+                    </form>
+                    <h4>*=Required</h4>
+                  </div>
+                </div>
+                </div>
+
       </script>
 
       <script type="text/x-handlebars" id="uploads">
@@ -142,5 +236,6 @@
       <script src="static/js/ember-droplet-mixin.js"></script>
       <script src="static/js/ember-droplet-view.js"></script>
       <script src="static/js/app.js"></script>
+      <script src="static/js/authController.js"></script>
 	  </body>
 </html>

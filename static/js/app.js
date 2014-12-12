@@ -8,10 +8,12 @@ App.ApplicationSerializer = DS.RESTSerializer.extend({
 });
 
 App.Router.map(function() {
-
-    this.resource("uploads",{path:"/"},function(){
+    this.route("signIn",{path:"/"})
+    this.route("signUp")
+    this.resource("uploads",function(){
       this.route("newUpload")
       this.route("transactions",{path:"/transactions/:uploadId"})
+
     })
 
 
@@ -32,6 +34,11 @@ App.Router.map(function() {
     upload:DS.belongsTo("upload",{async:true})
   })
 
+  App.User=DS.Model.extend({
+    email:DS.attr(),
+    password:DS.attr()
+  })
+
   App.UploadsTransactionsController=Ember.ArrayController.extend({
 
   })
@@ -44,6 +51,99 @@ App.Router.map(function() {
 
   })
 
+
+
+  App.SignInRoute = Ember.Route.extend({
+    activate:function(){
+      console.log("hi")
+      var controller=this;
+      if(this.controllerFor("auth").get("isAuthenticated")){
+        this.controllerFor("alert").send("showAlert","You are already signed in!","alert alert-warning alert-dismissible","devise-alert")
+
+        this.controllerFor("auth").get("currentUser").get("account").then(function(account){
+          controller.transitionTo("upload.newUpload")
+        })
+
+
+      }
+    },
+    setupController: function(controller, model){
+      controller.setProperties({
+        password: "",
+        errorMsg: ""
+      });
+
+    },
+
+    actions:{
+      login: function(){
+        //console.log(this.get("controller"))
+        this.controllerFor("auth").login(this)
+      },
+      cancel:function(){
+        this.transitionTo('entities.index')
+      }
+    }
+  })
+
+  App.ApplicationController=Ember.Controller.extend({
+    needs:["auth"],
+    isAuthenticated: Em.computed.alias("controllers.auth.isAuthenticated"),
+    actions:{
+      logout:function(){
+        this.get("controllers.auth").logout()
+      }
+    }
+  })
+
+  App.SignUpRoute = Ember.Route.extend({
+
+    actions:{
+      register:function(){
+        var route= this
+            $.ajax({
+              url: "/users_create",
+              type: "POST",
+              data:{
+                "email": route.controller.get("email"),
+                "password": route.controller.get("password")
+              },
+              success: function(data){
+                var auth=route.controllerFor("auth")
+                if(data.user){
+                  var serializedCurrentUser=auth.store.serializerFor("User").normalize(App.User,data.user)
+                  auth.set("currentUser",auth.store.push("User",serializedCurrentUser))
+                }
+                $('meta[name="csrf-token"]').attr('content', data['csrf-token'])
+                $('meta[name="csrf-param"]').attr('content', data['csrf-param'])
+                route.controllerFor("signUp").setProperties({password:"",email:""})
+                //route.controllerFor("alert").send("showAlert","You have successfully registered your account for our site!","alert alert-success alert-dismissible","devise-alert")
+                route.transitionTo('uploads.newUpload')
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                  if(jqXHR.responseJSON.errors){
+                    if(jqXHR.responseJSON.errors.email){
+                      //route.controllerFor("alert").send("showAlert","That email "+jqXHR.responseJSON.errors.email+".","alert alert-danger alert-dismissible","devise-alert")
+                    }
+                    else if(jqXHR.responseJSON.errors.profile_name){
+                      //route.controllerFor("alert").send("showAlert","That profile name "+jqXHR.responseJSON.errors.profile_name+".","alert alert-danger alert-dismissible","devise-alert")
+                    }
+                    else{
+                      //route.controllerFor("alert").send("showAlert","There was an error.  Please register again or contact support.","alert alert-danger alert-dismissible","devise-alert")
+                    }
+                  }
+                  else{
+                    //route.controllerFor("alert").send("showAlert","There was an error.  Please register again or contact support.","alert alert-danger alert-dismissible","devise-alert")
+                  }
+                }
+              })
+
+            }
+          }
+
+
+
+    })
 
   App.UploadsController=Ember.ArrayController.extend({
     selectedUpload:function(){
