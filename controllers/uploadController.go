@@ -24,28 +24,32 @@ func (this *UploadController) Index() {
 }
 
 func (this *UploadController) CreateUpload() {
-	file, fileHeader, err := this.GetFile("file")
-	if err != nil {
-		panic(err)
+	if this.Ctx.Input.Method() == "OPTIONS" {
+		this.ServeJson()
+	} else {
+		file, fileHeader, err := this.GetFile("file")
+		if err != nil {
+			panic(err)
+		}
+		fileBinary, newError := ioutil.ReadAll(file)
+		if newError != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile("/home/kempchee/go/src/github.com/kempchee/washsales/private/"+fileHeader.Filename, fileBinary, 0644)
+		if err != nil {
+			panic(err)
+		}
+		newUpload := models.Upload{fileHeader.Filename, bson.NewObjectId(), []bson.ObjectId{}}
+		transactions := newUpload.ParseTransactionsFromUpload()
+		var transactionIds []bson.ObjectId
+		for _, v := range transactions {
+			transactionIds = append(transactionIds, v.Id)
+		}
+		newUpload.TransactionIds = transactionIds
+		connection.UploadsCollection.Insert(&newUpload)
+		this.Data["json"] = newUpload
+		this.ServeJson()
 	}
-	fileBinary, newError := ioutil.ReadAll(file)
-	if newError != nil {
-		panic(err)
-	}
-	err = ioutil.WriteFile("/home/kempchee/go/src/github.com/kempchee/washsales/private/"+fileHeader.Filename, fileBinary, 0644)
-	if err != nil {
-		panic(err)
-	}
-	newUpload := models.Upload{fileHeader.Filename, bson.NewObjectId(), []bson.ObjectId{}}
-	transactions := newUpload.ParseTransactionsFromUpload()
-	var transactionIds []bson.ObjectId
-	for _, v := range transactions {
-		transactionIds = append(transactionIds, v.Id)
-	}
-	newUpload.TransactionIds = transactionIds
-	connection.UploadsCollection.Insert(&newUpload)
-	this.Data["json"] = newUpload
-	this.ServeJson()
 }
 
 func (this *UploadController) DeleteCsv() {

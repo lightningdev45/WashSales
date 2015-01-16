@@ -49,6 +49,7 @@ func (this *AuthController) Login() {
 	this.Data["json"] = struct {
 		User models.User `json:"user"`
 	}{u}
+	this.Ctx.Output.Header("Access-Control-Allow-Credentials", "true")
 	this.ServeJson()
 }
 
